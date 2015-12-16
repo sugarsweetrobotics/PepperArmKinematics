@@ -60,7 +60,7 @@ class PepperArmKinematics(OpenRTM_aist.DataFlowComponentBase):
 	def __init__(self, manager):
 		OpenRTM_aist.DataFlowComponentBase.__init__(self, manager)
 
-		self._d_targetHandPose = RTC.TimedPose3D(RTC.Time(0,0),0)
+		self._d_targetHandPose = RTC.TimedPose3D(RTC.Time(0,0),RTC.Pose3D(RTC.Point3D(0,0,0), RTC.Orientation3D(0,0,0)))
 		"""
 		"""
 		self._targetHandPoseIn = OpenRTM_aist.InPort("targetHandPose", self._d_targetHandPose)
@@ -72,7 +72,7 @@ class PepperArmKinematics(OpenRTM_aist.DataFlowComponentBase):
 		"""
 		"""
 		self._targetJointAngleOut = OpenRTM_aist.OutPort("targetJointAngle", self._d_targetJointAngle)
-		self._d_currentHandPose = RTC.TimedPose3D(RTC.Time(0,0),0)
+		self._d_currentHandPose = RTC.TimedPose3D(RTC.Time(0,0),RTC.Pose3D(RTC.Point3D(0,0,0), RTC.Orientation3D(0,0,0)))
 		"""
 		"""
 		self._currentHandPoseOut = OpenRTM_aist.OutPort("currentHandPose", self._d_currentHandPose)
@@ -172,8 +172,10 @@ class PepperArmKinematics(OpenRTM_aist.DataFlowComponentBase):
 		# @return RTC::ReturnCode_t
 		#
 		#
-	def onActivated(self, ec_id):
-	
+	def onActivated(self, ec_id):	
+		sys.stdout.write('[RTC::PepperArmKinematics] onActivated called.\n')
+		sys.stdout.write('[RTC::PepperArmKinematics] Configuration right/left is %s\n' % repr(self._rightLeft[0]))
+
 		return RTC.RTC_OK
 	
 	#	##
@@ -186,9 +188,9 @@ class PepperArmKinematics(OpenRTM_aist.DataFlowComponentBase):
 	#	# @return RTC::ReturnCode_t
 	#	#
 	#	#
-	#def onDeactivated(self, ec_id):
-	#
-	#	return RTC.RTC_OK
+	def onDeactivated(self, ec_id):
+		sys.stdout.write('[RTC::PepperArmKinematics] onDeactivated called.\n')	
+		return RTC.RTC_OK
 	
 		##
 		#
@@ -201,6 +203,18 @@ class PepperArmKinematics(OpenRTM_aist.DataFlowComponentBase):
 		#
 		#
 	def onExecute(self, ec_id):
+		if self._currentJointAngleIn.isNew():
+			self._d_currentJointAngle = self._currentJointAngleIn.read()
+			if len(self._d_currentJointAngle.data) != 5:
+				sys.stdout.write('[RTC::PepperArmKinematics] Invalid number of elements (%d / %d required)\n' % (len(self._d_currentJOintAngle.data), 5))
+				return RTC.RTC_ERROR
+
+			print '[RTC::PepperArmKinematics] Current Joint Angle is ', self._d_currentJointAngle.data
+
+		if self._targetHandPoseIn.isNew():
+			self._d_targetHandPose = self._targetHandPoseIn.read()
+			
+			print '[RTC::PepperArmKinematics] Target Hand Pose is ', self._d_targetHandPose.data
 	
 		return RTC.RTC_OK
 	
